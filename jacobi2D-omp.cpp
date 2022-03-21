@@ -21,11 +21,11 @@ long double get_res(double *u, double N) {
 }
 
 void jacobi(int N) {
+	double n = (double) N;
+    double h = 1/(n+1);
 	int n2 = N+2;
     double* u = (double*) malloc(n2*n2*sizeof(double));
     for (long i = 0; i < n2*n2; i++) u[i] = 0;
-    double n = (double) N;
-    double h = 1/(n+1);
     double resid = get_res(u,n);
     double resid0=0.0;
     double* ut = (double*) malloc(n2*n2*sizeof(double));
