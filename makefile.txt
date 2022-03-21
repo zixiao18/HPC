@@ -1,6 +1,6 @@
 MMult1:
 	g++ -O3 MMult1.cpp -o MBlock
-	g++ -O3 -fopenmp MMult1.cpp -o MBlock
+	g++ -O3 -fopenmp -march=native MMult1.cpp -o MBlock
 
 Val_test01_solved:
 	g++ -O3 Val_test01_solved.cpp -o val1
@@ -9,22 +9,25 @@ Val_test02_solved:
 	g++ -O3 Val_test01_solved.cpp -o val2
 
 omp_solved2:
-	g++ -O3 omp_solved2.c -o omp2
+	g++ -O3 -fopenmp omp_solved2.c -o omp2
 
 omp_solved3:
-	g++ -O3 omp_solved2.c -o omp3
+	g++ -O3 -fopenmp omp_solved3.c -o omp3
 
 omp_solved4:
-	g++ -O3 omp_solved2.c -o omp4
+	g++ -O3 -fopenmp omp_solved4.c -o omp4
 
 omp_solved5:
-	g++ -O3 omp_solved2.c -o omp5
+	g++ -O3 -fopenmp omp_solved5.c -o omp5
 
 omp_solved6:
-	g++ -O3 omp_solved2.c -o omp6
+	g++ -O3 -fopenmp omp_solved6.c -o omp6
 
 jacobi2D-omp:
-	g++ -O3 jacobi2D-omp.cpp -o jacobi
+	g++ -O3 -fopenmp -march=native jacobi2D-omp.cpp -o jacobi
 
 gs2D-omp:
-	g++ -O3 gs2D-omp.cpp -o gs
+	g++ -O3 -fopenmp -march=native gs2D-omp.cpp -o gs
+
+clean:
+	rm -f *.o
