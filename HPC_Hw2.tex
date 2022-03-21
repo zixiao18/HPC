@@ -1,0 +1,156 @@
+\documentclass{article}
+\pagestyle{empty}
+\usepackage{amsmath,amssymb,latexsym,epsfig,amsthm}
+\usepackage{graphicx}
+\usepackage{url}
+\addtolength{\hoffset}{-2.5 cm} \addtolength{\textwidth}{5 cm}
+\topmargin-0in \textheight9.2in
+\parindent0pt
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{rem}[theorem]{Remark}
+\newtheorem{algorithm}[theorem]{Algorithm}
+%\newmathop{Hom}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\End}{\operatorname{End}}
+
+\newcommand{\BLambda}{\boldsymbol{\Lambda}}
+\newcommand{\BSigma}{\boldsymbol{\Sigma}}
+\newcommand{\beps}{\boldsymbol{\eps}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\BA}{\boldsymbol{A}}
+\newcommand{\BJ}{\boldsymbol{J}}
+\newcommand{\BH}{\boldsymbol{H}}
+\newcommand{\BU}{\boldsymbol{U}}
+\newcommand{\BV}{\boldsymbol{V}}
+\newcommand{\BS}{\boldsymbol{S}}
+\newcommand{\eps}{\epsilon}
+\newcommand{\BX}{\boldsymbol{X}}
+\newcommand{\BY}{\boldsymbol{Y}}
+\newcommand{\bp}{\boldsymbol{p}}
+\newcommand{\bq}{\boldsymbol{q}}
+\newcommand{\bu}{\boldsymbol{u}}
+\newcommand{\bv}{\boldsymbol{v}}
+\newcommand{\bx}{\boldsymbol{x}}
+\newcommand{\by}{\boldsymbol{y}}
+\newcommand{\bz}{\boldsymbol{z}}
+\newcommand{\I}{\boldsymbol{I}}
+\newcommand{\bone}{\boldsymbol{1}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\pa}{\partial}
+
+%\newcommand{\ker}{\operatorname{Ker}}
+\newcommand{\im}{\operatorname{Im}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\MSE}{MSE}
+\DeclareMathOperator{\bias}{bias}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\se}{se}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\Proj}{Proj}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\argmax}{argmax}
+\DeclareMathOperator{\E}{\mathbb{E}}
+\newcommand{\Ans}{\\{\bf Answer: }}
+\renewcommand{\Pr}{\mathbb{P}}
+\newcommand*\diff{\mathop{}\!\mathrm{d}}
+
+\begin{document}
+
+{ \centerline{\large HPC Assignment 2 \quad Zixiao Yang, zy1032}}
+\vskip0.25cm
+\vskip0.25cm
+
+All the programs are proceed on \begin{verbatim}11th Gen Intel(R) Core(TM) i7-1195G7 @ 2.90GHz ~ 2.92 GHz  RAM 32 GB \end{verbatim}
+\begin{enumerate}
+\item Problem 1 Finding Memory Bugs
+\begin{enumerate}
+\item We change \begin{verbatim} for ( i = 2; i <= n; i++ ) \end{verbatim} to \begin{verbatim} for ( i = 2; i < n; i++ ) \end{verbatim}
+because we only alocate $n$ times the size of \emph{int}.
+\\ \\
+We also change \begin{verbatim} delete[] x; \end{verbatim} to \begin{verbatim} free(x) \end{verbatim}
+because $x$ is allocated using \emph{malloc()}.
+\item 
+We change \begin{verbatim}  for ( i = 0; i < 5; i++ )
+  {
+    x[i] = i;
+  } \end{verbatim} to \begin{verbatim}   for ( i = 0; i < 10; i++ )
+  {
+    x[i] = i;
+  } \end{verbatim}
+to define all the undefined entries.
+\end{enumerate}
+\item Optimizing matrix-matrix multiplication
+\\
+We repeat the computations for several matrix sizes and we report the runtime as follows.
+\\
+We set $Block_size=32$ as a constant
+\[
+\begin{array}{|c|c|c|c|c|}
+\hline
+ Matrix Size & Time for Blocked (-O3 )& Time for OpenMP (-O3) &Time for OpenMP(-O2)\\
+\hline
+32 & 0.1796 & 0.0270  & 0.0972\\ \hline
+224 & 0.1870  & 0.0382&0.1614\\ \hline
+416 & 0.1878 &0.0550 &0.1359\\ \hline
+608 & 0.2090 & 0.0578 &0.1452\\ \hline
+800 & 0.1931 & 0.0518&0.1249\\ \hline
+992 & 0.3730 & 0.0945 &0.2506\\ \hline
+1184 & 0.3424 & 0.0861&0.2030\\ \hline
+\end{array}
+\]
+Some errors occur when matrix sizes are greater than 1400. There are \emph{nan} values
+for larger matrix size.
+\\
+From the table, we can see that the OpenMP is far faster than the Blocked version, because the computation are proceed parallelly with OpenMP. We rerun the whole process with the $-O2$ flag, but we got slower results.
+\newpage
+\item Finding OpenMP bugs
+\begin{enumerate}
+\item omp2
+\\ \\
+We change \begin{verbatim}#pragma omp for schedule(dynamic,10) \end{verbatim} to \begin{verbatim} #pragma omp for schedule(dynamic,10) reduction(+: total) \end{verbatim}
+We include reduction to avoid potential race of multiple threads updating the shared variable total at the same time. 
+\item omp3
+\\ \\
+We remove the barrier \begin{verbatim}#pragma omp barrier \end{verbatim}
+because two threads will not reach this barrier to avoid the infinite wait.
+\item omp4
+\\ \\
+We shrink $N$ from 1024 to 256 to fulfill the smallstack size limit.
+\item omp5
+\\ \\
+We switch the lock/unlock order of $locka$ and $lockb$ so the two sections share the same lock/unlock order.
+This is to prevent portential deadlocks.
+\item omp6
+\\ \\
+We make sum a global variable so that sum will be updated if the sum in dotprod is updated. We also include 
+\emph{return sum} to the function \emph{dotprod} to fix a small error.
+\end{enumerate}
+\item OpenMP version of 2D Jacobi / Gauss-Seidel smoothing
+\\
+We write the OpenMP implementations of both methods. Here are the results.
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+ Methods & Matrix size & Residual after 4500 iters &  Time elapsed for 5000 iters\\
+\hline
+Jacobi & 100 & 0.183577  & 0.494653\\ \hline
+Jacobi & 200  & 0.868066& 0.796452\\ \hline
+Jacobi & 300 & 0.993961 & 1.395920 \\ \hline
+GS & 100 &0.041612 / 2&0.665437\\ \hline
+GS & 200 & 1.070824 / 2&0.842405\\ \hline
+GS& 300 & 1.805903 / 2& 1.500414 \\ \hline
+\end{tabular}
+\end{center}
+The residuals are devided by 2 in GS, because the initial error was 2 instead of 1 for some reason.
+\\
+We can see from the table, that the GS enjoys a higher precision at a cost of slightly more time. One thing to be noticed is that both methods are slow in terms of convergent rate for large matrices.
+\end{enumerate}
+\end{document}
