@@ -1,0 +1,30 @@
+MMult1:
+	g++ -O3 MMult1.cpp -o MBlock
+	g++ -O3 -fopenmp MMult1.cpp -o MBlock
+
+Val_test01_solved:
+	g++ -O3 Val_test01_solved.cpp -o val1
+
+Val_test02_solved:
+	g++ -O3 Val_test01_solved.cpp -o val2
+
+omp_solved2:
+	g++ -O3 omp_solved2.cpp -o omp2
+
+omp_solved3:
+	g++ -O3 omp_solved2.cpp -o omp3
+
+omp_solved4:
+	g++ -O3 omp_solved2.cpp -o omp4
+
+omp_solved5:
+	g++ -O3 omp_solved2.cpp -o omp5
+
+omp_solved6:
+	g++ -O3 omp_solved2.cpp -o omp6
+
+jacobi2D-omp:
+	g++ -O3 jacobi2D-omp.cpp -o jacobi
+
+gs2D-omp:
+	g++ -O3 gs2D-omp.cpp -o gs
