@@ -7,29 +7,29 @@
 #include <string>
 #include <math.h>
 
-#define N 4096 // row size 
-#define M 2048 // column size
-#define BLOCK_SIZE 1024
+#define N 1024 // row size 
+#define M 512 // column size
+#define BLOCK_SIZE 256
 
-void mat_mul (double* A, double* V, double *C){
+void vec_mul (double* A, double* B, double *C){
     //#pragma omp parallel for collapse(2)
     for (long i = 0; i < N; i++) {
         double inner_prod = 0;
         for (long j = 0; j < M; j++) {
             //#pragma omp atomic update 
-            inner_prod += A[i*M+j] * V[j];
+            inner_prod += A[i*M+j] * B[j];
         }
         C[i] = inner_prod;
     }
 }
 
 __global__ 
-void mat_mul_kernel(double* A, double* V, double* C, double* temp) {
+void vec_mul_kernel(double* A, double* B, double* C, double* temp) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < N) {
         double value = 0;
         for (long i = 0; i < M; i++) {
-            value += A[idx*M+i] * V[i];
+            value += A[idx*M+i] * B[i];
         }
         C[idx] = value;
     }
@@ -48,33 +48,33 @@ int main(int argc, char** argcv) {
     long row_size = N;
 
     double* A = (double*) malloc(col_size*row_size * sizeof(double));
-    double* V = (double*) malloc(col_size * sizeof(double));
+    double* B = (double*) malloc(col_size * sizeof(double));
     double* C = (double*) malloc(row_size * sizeof(double));
     double* C_ref = (double*) malloc(row_size * sizeof(double));
 
     for (long i = 0; i < col_size*row_size; i++) A[i] = drand48();
-    for (long i = 0; i < col_size; i++) V[i] = drand48();
+    for (long i = 0; i < col_size; i++) B[i] = drand48();
     for (long i = 0; i < row_size; i++) C[i] = 0.0;
     for (long i = 0; i < row_size; i++) C_ref[i] = 0.0;
 
     double tt = omp_get_wtime();
-    mat_mul(A,V,C_ref);
+    vec_mul(A,B,C_ref);
     printf("CPU %f s\n", omp_get_wtime()-tt);
     double cpu_bandwidth = 3*M*N*sizeof(double)/(omp_get_wtime()-tt)/1e9;
     printf("CPU bandwidth = %f GB/s\n", cpu_bandwidth);
 
-    double *A_d, *V_d, *C_d, *temp;
+    double *A_d, *B_d, *C_d, *temp;
     cudaMalloc(&A_d, col_size*row_size*sizeof(double));
     Check_CUDA_Error("malloc x failed");
-    cudaMalloc(&V_d, col_size*sizeof(double));
+    cudaMalloc(&B_d, col_size*sizeof(double));
     cudaMalloc(&C_d, row_size*sizeof(double));
     cudaMalloc(&temp, col_size*row_size*sizeof(double));
 
     tt = omp_get_wtime();
     cudaMemcpy(A_d, A, col_size*row_size*sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(V_d, V, col_size*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(B_d, B, col_size*sizeof(double), cudaMemcpyHostToDevice);
     double ttinner = omp_get_wtime();
-    mat_mul_kernel<<<N/BLOCK_SIZE,BLOCK_SIZE>>>(A_d,V_d,C_d,temp);
+    vec_mul_kernel<<<N/BLOCK_SIZE,BLOCK_SIZE>>>(A_d,B_d,C_d,temp);
     cudaDeviceSynchronize();
     ttinner = omp_get_wtime() - ttinner;
     cudaMemcpy(C, C_d, row_size*sizeof(double), cudaMemcpyDeviceToHost);
@@ -88,12 +88,12 @@ int main(int argc, char** argcv) {
     printf("Error = %f\n", err);
 
     cudaFree(A_d);
-    cudaFree(V_d);
+    cudaFree(B_d);
     cudaFree(C_d);
     cudaFree(temp);
 
     free(A);
-    free(V);
+    free(B);
     free(C);
     free(C_ref);
 

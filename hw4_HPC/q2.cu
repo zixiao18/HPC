@@ -64,7 +64,7 @@ void jacobi_gpu(double* unew, double* uold, long* f, const int N, const double h
 }
 
 int main(int argc, char** argv) {
-    int N = 256;
+    int N = 192;
     int np2 = (int) N + 2;
     double* unew = (double*) malloc(np2*np2*sizeof(double));
     double* uold = (double*) malloc(np2*np2*sizeof(double));
